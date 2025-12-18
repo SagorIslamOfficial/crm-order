@@ -1,0 +1,20 @@
+{
+    "mcpServers": {
+        "laravel-boost": {
+            "command": "/Users/sagorislam/Library/Application Support/Herd/bin/php83",
+            "args": [
+                "/Volumes/500GB1/MEGA/backend/crm-order/artisan",
+                "boost:mcp"
+            ]
+        },
+        "herd": {
+            "command": "/Users/sagorislam/Library/Application Support/Herd/bin/php83",
+            "args": [
+                "/Applications/Herd.app/Contents/Resources/herd-mcp.phar"
+            ],
+            "env": {
+                "SITE_PATH": "/Volumes/500GB1/MEGA/backend/crm-order"
+            }
+        }
+    }
+}
