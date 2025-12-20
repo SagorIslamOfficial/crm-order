@@ -57,7 +57,7 @@
 ### 1.5 orders
 
 - id (UUID, PK)
-- order_number (string, unique) (e.g. DHK-000123) (generated from shop.code + shop.next_order_sequence)
+- order_number (string, unique) (e.g. ORD-000123) (generated from shop.code + shop.next_order_sequence)
 - shop_id (UUID, FK → shops.id)
 - customer_id (UUID, FK → customers.id)
 - delivery_date (date)
