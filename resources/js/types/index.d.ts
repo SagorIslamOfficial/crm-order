@@ -30,6 +30,12 @@ export interface SharedData {
     [key: string]: unknown;
 }
 
+export interface PageProps extends SharedData {
+    errors?: Record<string, string>;
+    success?: string;
+    [key: string]: unknown;
+}
+
 export interface User {
     id: number;
     name: string;
@@ -37,6 +43,8 @@ export interface User {
     avatar?: string;
     email_verified_at: string | null;
     two_factor_enabled?: boolean;
+    roles?: string[];
+    permissions?: string[];
     created_at: string;
     updated_at: string;
     [key: string]: unknown; // This allows for additional properties...
