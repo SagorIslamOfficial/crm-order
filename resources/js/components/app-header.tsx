@@ -28,21 +28,28 @@ import {
 } from '@/components/ui/tooltip';
 import { UserMenuContent } from '@/components/user-menu-content';
 import { useInitials } from '@/hooks/use-initials';
+import { hasPermission } from '@/lib/permissions';
 import { cn, isSameUrl, resolveUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
+import { create as ordersCreate, index as ordersIndex } from '@/routes/orders';
 import { type BreadcrumbItem, type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, Menu, Search } from 'lucide-react';
+import {
+    BookOpen,
+    Folder,
+    LayoutGrid,
+    Menu,
+    Package,
+    Receipt,
+    Ruler,
+    Search,
+    Settings,
+    ShoppingCart,
+    Store,
+    Users,
+} from 'lucide-react';
 import AppLogo from './app-logo';
 import AppLogoIcon from './app-logo-icon';
-
-const mainNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
-    },
-];
 
 const rightNavItems: NavItem[] = [
     {
@@ -67,7 +74,116 @@ interface AppHeaderProps {
 export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
     const page = usePage<SharedData>();
     const { auth } = page.props;
+    const user = auth?.user;
     const getInitials = useInitials();
+
+    // Build navigation items dynamically based on permissions
+    const mainNavItems: NavItem[] = [];
+
+    // Dashboard
+    if (user) {
+        mainNavItems.push({
+            title: 'Dashboard',
+            href: dashboard(),
+            icon: LayoutGrid,
+        });
+    }
+
+    // Orders
+    if (
+        !user ||
+        hasPermission(user, 'orders.view') ||
+        user?.roles?.includes('Administrator')
+    ) {
+        mainNavItems.push({
+            title: 'Orders',
+            href: ordersIndex(),
+            icon: ShoppingCart,
+        });
+    }
+
+    // Create Order
+    if (
+        !user ||
+        hasPermission(user, 'orders.create') ||
+        user?.roles?.includes('Administrator') ||
+        user?.roles?.includes('Salesperson')
+    ) {
+        mainNavItems.push({
+            title: 'New Order',
+            href: ordersCreate(),
+            icon: Receipt,
+        });
+    }
+
+    // Customers
+    if (
+        !user ||
+        hasPermission(user, 'customers.view') ||
+        user?.roles?.includes('Administrator') ||
+        user?.roles?.includes('Salesperson')
+    ) {
+        mainNavItems.push({
+            title: 'Customers',
+            href: '/customers',
+            icon: Users,
+        });
+    }
+
+    // Product Types
+    if (
+        !user ||
+        hasPermission(user, 'product-types.view') ||
+        user?.roles?.includes('Administrator') ||
+        user?.roles?.includes('Product Manager')
+    ) {
+        mainNavItems.push({
+            title: 'Product Types',
+            href: '/product-types',
+            icon: Package,
+        });
+    }
+
+    // Product Sizes
+    if (
+        !user ||
+        hasPermission(user, 'product-sizes.view') ||
+        user?.roles?.includes('Administrator') ||
+        user?.roles?.includes('Product Manager')
+    ) {
+        mainNavItems.push({
+            title: 'Product Sizes',
+            href: '/product-sizes',
+            icon: Ruler,
+        });
+    }
+
+    // Shops
+    if (
+        !user ||
+        hasPermission(user, 'shops.view') ||
+        user?.roles?.includes('Administrator') ||
+        user?.roles?.includes('Quantity Manager')
+    ) {
+        mainNavItems.push({
+            title: 'Shops',
+            href: '/shops',
+            icon: Store,
+        });
+    }
+
+    // User Management
+    if (
+        user &&
+        (hasPermission(user, 'users.view') ||
+            user?.roles?.includes('Administrator'))
+    ) {
+        mainNavItems.push({
+            title: 'User Management',
+            href: '/users',
+            icon: Settings,
+        });
+    }
     return (
         <>
             <div className="border-b border-sidebar-border/80">
@@ -96,12 +212,12 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                                 </SheetHeader>
                                 <div className="flex h-full flex-1 flex-col space-y-4 p-4">
                                     <div className="flex h-full flex-col justify-between text-sm">
-                                        <div className="flex flex-col space-y-4">
+                                        <div className="flex flex-col space-y-3">
                                             {mainNavItems.map((item) => (
                                                 <Link
                                                     key={item.title}
                                                     href={item.href}
-                                                    className="flex items-center space-x-2 font-medium"
+                                                    className="flex items-center space-x-2 rounded px-2 py-1 font-medium hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                                                 >
                                                     {item.icon && (
                                                         <Icon
