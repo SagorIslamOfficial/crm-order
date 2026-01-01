@@ -55,10 +55,8 @@ interface PaginationMeta {
     data: ProductSize[];
 }
 
-interface PaginatedProductSizes extends PaginationMeta {}
-
 interface Props {
-    productSizes: PaginatedProductSizes;
+    productSizes: PaginationMeta;
     productTypes: ProductType[];
     search?: string;
     productTypeId?: string;
