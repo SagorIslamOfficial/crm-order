@@ -16,6 +16,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { router } from '@inertiajs/react';
+import { update as ordersUpdate } from '@/routes/orders';
 import { AlertTriangle } from 'lucide-react';
 import { useState } from 'react';
 
@@ -46,6 +47,9 @@ export default function StatusUpdateModal({
 }: StatusUpdateModalProps) {
     const [status, setStatus] = useState(currentStatus);
     const [processing, setProcessing] = useState(false);
+    const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+    const [pendingStatus, setPendingStatus] = useState<string | null>(null);
+    const [confirmMessage, setConfirmMessage] = useState('');
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -57,31 +61,33 @@ export default function StatusUpdateModal({
 
         // Show confirmation for critical status changes
         if (status === 'cancelled') {
-            if (
-                !confirm(
-                    'Are you sure you want to cancel this order? This action may affect inventory and payments.',
-                )
-            ) {
-                return;
-            }
+            setPendingStatus(status);
+            setConfirmMessage(
+                'Are you sure you want to cancel this order? This action may affect inventory and payments.',
+            );
+            setConfirmDialogOpen(true);
+            return;
         }
 
         if (status === 'delivered' && currentStatus === 'cancelled') {
-            if (
-                !confirm(
-                    'Are you sure you want to mark a cancelled order as delivered?',
-                )
-            ) {
-                return;
-            }
+            setPendingStatus(status);
+            setConfirmMessage(
+                'Are you sure you want to mark a cancelled order as delivered?',
+            );
+            setConfirmDialogOpen(true);
+            return;
         }
 
+        submitStatusUpdate(status);
+    };
+
+    const submitStatusUpdate = (newStatus: string) => {
         setProcessing(true);
 
         router.put(
-            `/orders/${orderId}`,
+            ordersUpdate(orderId).url,
             {
-                status,
+                status: newStatus,
             },
             {
                 onSuccess: () => {
@@ -98,6 +104,13 @@ export default function StatusUpdateModal({
         );
     };
 
+    const handleConfirm = () => {
+        setConfirmDialogOpen(false);
+        if (pendingStatus) {
+            submitStatusUpdate(pendingStatus);
+        }
+    };
+
     const getStatusColor = (s: string) => {
         switch (s) {
             case 'pending':
@@ -112,98 +125,141 @@ export default function StatusUpdateModal({
     };
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[425px]">
-                <form onSubmit={handleSubmit}>
-                    <DialogHeader>
-                        <DialogTitle>Update Order Status</DialogTitle>
-                        <DialogDescription>
-                            Current status:{' '}
-                            <span className={getStatusColor(currentStatus)}>
-                                {statusLabels[currentStatus]}
-                            </span>
-                        </DialogDescription>
-                    </DialogHeader>
+        <>
+            <Dialog open={open} onOpenChange={onOpenChange}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <form onSubmit={handleSubmit}>
+                        <DialogHeader>
+                            <DialogTitle>Update Order Status</DialogTitle>
+                            <DialogDescription>
+                                Current status:{' '}
+                                <span className={getStatusColor(currentStatus)}>
+                                    {statusLabels[currentStatus]}
+                                </span>
+                            </DialogDescription>
+                        </DialogHeader>
 
-                    <div className="grid gap-4 py-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="status">
-                                New Status{' '}
-                                <span className="text-red-500">*</span>
-                            </Label>
-                            <Select
-                                value={status}
-                                onValueChange={(value) =>
-                                    setStatus(
-                                        value as
-                                            | 'pending'
-                                            | 'delivered'
-                                            | 'cancelled',
-                                    )
-                                }
-                                required
-                            >
-                                <SelectTrigger id="status">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="pending">
-                                        <span className="flex items-center gap-2">
-                                            <span className="size-2 rounded-full bg-yellow-500" />
-                                            Pending
-                                        </span>
-                                    </SelectItem>
-                                    <SelectItem value="delivered">
-                                        <span className="flex items-center gap-2">
-                                            <span className="size-2 rounded-full bg-green-500" />
-                                            Delivered
-                                        </span>
-                                    </SelectItem>
-                                    <SelectItem value="cancelled">
-                                        <span className="flex items-center gap-2">
-                                            <span className="size-2 rounded-full bg-red-500" />
-                                            Cancelled
-                                        </span>
-                                    </SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <p className="text-sm text-muted-foreground">
-                                {statusDescriptions[status]}
-                            </p>
-                        </div>
+                        <div className="grid gap-4 py-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="status">
+                                    New Status{' '}
+                                    <span className="text-red-500">*</span>
+                                </Label>
+                                <Select
+                                    value={status}
+                                    onValueChange={(value) =>
+                                        setStatus(
+                                            value as
+                                                | 'pending'
+                                                | 'delivered'
+                                                | 'cancelled',
+                                        )
+                                    }
+                                    required
+                                >
+                                    <SelectTrigger id="status">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="pending">
+                                            <span className="flex items-center gap-2">
+                                                <span className="size-2 rounded-full bg-yellow-500" />
+                                                Pending
+                                            </span>
+                                        </SelectItem>
+                                        <SelectItem value="delivered">
+                                            <span className="flex items-center gap-2">
+                                                <span className="size-2 rounded-full bg-green-500" />
+                                                Delivered
+                                            </span>
+                                        </SelectItem>
+                                        <SelectItem value="cancelled">
+                                            <span className="flex items-center gap-2">
+                                                <span className="size-2 rounded-full bg-red-500" />
+                                                Cancelled
+                                            </span>
+                                        </SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <p className="text-sm text-muted-foreground">
+                                    {statusDescriptions[status]}
+                                </p>
+                            </div>
 
-                        {status === 'cancelled' && (
-                            <div className="rounded-md border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-950">
-                                <div className="flex gap-2">
-                                    <AlertTriangle className="size-5 text-red-600 dark:text-red-400" />
-                                    <div className="text-sm text-red-800 dark:text-red-200">
-                                        <p className="font-semibold">Warning</p>
-                                        <p>
-                                            Cancelling this order will prevent
-                                            further payments and mark it as
-                                            incomplete.
-                                        </p>
+                            {status === 'cancelled' && (
+                                <div className="rounded-md border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-950">
+                                    <div className="flex gap-2">
+                                        <AlertTriangle className="size-5 text-red-600 dark:text-red-400" />
+                                        <div className="text-sm text-red-800 dark:text-red-200">
+                                            <p className="font-semibold">
+                                                Warning
+                                            </p>
+                                            <p>
+                                                Cancelling this order will
+                                                prevent further payments and
+                                                mark it as incomplete.
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        )}
-                    </div>
+                            )}
+                        </div>
 
+                        <DialogFooter>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => onOpenChange(false)}
+                                disabled={processing}
+                            >
+                                Cancel
+                            </Button>
+                            <Button type="submit" disabled={processing}>
+                                {processing ? 'Updating...' : 'Update Status'}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* Confirmation Dialog */}
+            <Dialog
+                open={confirmDialogOpen}
+                onOpenChange={setConfirmDialogOpen}
+            >
+                <DialogContent className="sm:max-w-[400px]">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <AlertTriangle className="h-5 w-5 text-yellow-600" />
+                            Confirm Status Change
+                        </DialogTitle>
+                    </DialogHeader>
+                    <p className="text-sm text-muted-foreground">
+                        {confirmMessage}
+                    </p>
                     <DialogFooter>
                         <Button
                             type="button"
                             variant="outline"
-                            onClick={() => onOpenChange(false)}
+                            onClick={() => {
+                                setConfirmDialogOpen(false);
+                                setPendingStatus(null);
+                            }}
                             disabled={processing}
                         >
                             Cancel
                         </Button>
-                        <Button type="submit" disabled={processing}>
-                            {processing ? 'Updating...' : 'Update Status'}
+                        <Button
+                            type="button"
+                            variant="destructive"
+                            onClick={handleConfirm}
+                            disabled={processing}
+                        >
+                            {processing ? 'Updating...' : 'Confirm'}
                         </Button>
                     </DialogFooter>
-                </form>
-            </DialogContent>
-        </Dialog>
+                </DialogContent>
+            </Dialog>
+        </>
     );
 }
