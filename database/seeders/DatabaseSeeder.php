@@ -3,13 +3,16 @@
 namespace Database\Seeders;
 
 use App\Models\User;
+use App\Modules\Customer\Database\Seeders\CustomerSeeder;
+use App\Modules\Order\Database\Seeders\OrderSeeder;
+use App\Modules\Product\Database\Seeders\ProductSizeSeeder;
+use App\Modules\Product\Database\Seeders\ProductTypeSeeder;
+use App\Modules\Shop\Database\Seeders\ShopSeeder;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
+    // Seed the application's database.
     public function run(): void
     {
         // Seed roles and permissions first
@@ -61,7 +64,7 @@ class DatabaseSeeder extends Seeder
         );
         $quantityManager->syncRoles(['Quantity Manager']);
 
-        // Seed master data
+        // Seed master data from modules
         $this->call([
             ShopSeeder::class,
             ProductTypeSeeder::class,

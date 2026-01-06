@@ -9,9 +9,7 @@ use Spatie\Permission\PermissionRegistrar;
 
 class RolePermissionSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
+    // Run the database seeds.
     public function run(): void
     {
         // Reset cached roles and permissions
@@ -115,7 +113,7 @@ class RolePermissionSeeder extends Seeder
             'orders.view',
         ]);
 
-        $quantityManagerRole = \Spatie\Permission\Models\Role::create(['name' => 'Quantity Manager']);
+        $quantityManagerRole = Role::create(['name' => 'Quantity Manager']);
         $quantityManagerRole->givePermissionTo([
             'dashboard.view',
             'orders.view',
