@@ -11,15 +11,17 @@ use Spatie\Permission\Models\Role;
 
 class RoleController extends Controller
 {
+    // Dependency Injection of RoleRepository
     public function __construct(
         private readonly RoleRepository $roleRepository,
     ) {}
 
+    // List all roles
     public function index(Request $request)
     {
         $search = $request->query('search');
 
-        $roles = $this->roleRepository->paginate(15)->through(function ($role) {
+        $roles = $this->roleRepository->getPaginated(filters: ['search' => $search])->through(function ($role) {
             return [
                 'id' => $role->id,
                 'name' => $role->name,
@@ -39,6 +41,7 @@ class RoleController extends Controller
         ]);
     }
 
+    // Show form to create a new role
     public function create()
     {
         $permissions = $this->roleRepository->getPermissions()->map(function ($permission) {
@@ -53,6 +56,7 @@ class RoleController extends Controller
         ]);
     }
 
+    // Store a new role
     public function store(StoreRoleRequest $request)
     {
         $role = $this->roleRepository->create([
@@ -65,6 +69,7 @@ class RoleController extends Controller
             ->with('message', 'Role created successfully.');
     }
 
+    // Display a specific role
     public function show(Role $role)
     {
         return Inertia::render('roles/show', [
@@ -86,6 +91,7 @@ class RoleController extends Controller
         ]);
     }
 
+    // Show form to edit a role
     public function edit(Role $role)
     {
         $permissions = $this->roleRepository->getPermissions()->map(function ($permission) {
@@ -106,6 +112,7 @@ class RoleController extends Controller
         ]);
     }
 
+    // Update a specific role
     public function update(Role $role, UpdateRoleRequest $request)
     {
         $this->roleRepository->update($role, [

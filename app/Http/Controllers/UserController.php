@@ -12,15 +12,17 @@ use Inertia\Inertia;
 
 class UserController extends Controller
 {
+    // Dependency Injection of UserRepository
     public function __construct(
         private readonly UserRepository $userRepository,
     ) {}
 
+    // List users with pagination and search
     public function index(Request $request)
     {
         $search = $request->query('search');
 
-        $users = $this->userRepository->searchAndPaginate($search, 15)->through(function ($user) {
+        $users = $this->userRepository->searchAndPaginate($search)->through(function ($user) {
             return [
                 'id' => $user->id,
                 'name' => $user->name,
@@ -40,6 +42,7 @@ class UserController extends Controller
         ]);
     }
 
+    // Show form to create a new user
     public function create()
     {
         $roles = $this->userRepository->getRoles()
@@ -56,6 +59,7 @@ class UserController extends Controller
         ]);
     }
 
+    // Store a new user
     public function store(StoreUserRequest $request)
     {
         $user = $this->userRepository->create([
@@ -72,6 +76,7 @@ class UserController extends Controller
             ->with('message', 'User created successfully.');
     }
 
+    // Display a specific user
     public function show(User $user)
     {
         $roles = $this->userRepository->getRoles()
@@ -98,6 +103,7 @@ class UserController extends Controller
         ]);
     }
 
+    // Edit a specific user
     public function edit(User $user)
     {
         $roles = $this->userRepository->getRoles()
@@ -121,6 +127,7 @@ class UserController extends Controller
         ]);
     }
 
+    // Update a specific user
     public function update(User $user, UpdateUserRequest $request)
     {
         $updateData = [
@@ -143,6 +150,7 @@ class UserController extends Controller
             ->with('message', 'User updated successfully.');
     }
 
+    // Delete a specific user
     public function destroy(User $user)
     {
         // Prevent deleting own account
@@ -157,6 +165,7 @@ class UserController extends Controller
             ->with('message', 'User deleted successfully.');
     }
 
+    // Assign role to a user
     public function assignRole(User $user, string $roleName)
     {
         // Prevent assigning Administrator role to anyone
@@ -171,6 +180,7 @@ class UserController extends Controller
         return back()->with('message', 'Role assigned successfully.');
     }
 
+    // Remove role from a user
     public function removeRole(User $user, string $roleName)
     {
         // Prevent removing Administrator role from anyone

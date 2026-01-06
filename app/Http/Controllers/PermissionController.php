@@ -11,15 +11,17 @@ use Spatie\Permission\Models\Permission;
 
 class PermissionController extends Controller
 {
+    // Dependency Injection of PermissionRepository
     public function __construct(
         private readonly PermissionRepository $permissionRepository,
     ) {}
 
+    // List all permissions with pagination
     public function index(Request $request)
     {
         $search = $request->query('search');
 
-        $permissions = $this->permissionRepository->getPaginated(15)->through(function ($permission) {
+        $permissions = $this->permissionRepository->getPaginated()->through(function ($permission) {
             return $this->permissionRepository->getPermissionWithCounts($permission);
         });
 
@@ -29,11 +31,13 @@ class PermissionController extends Controller
         ]);
     }
 
+    // Show form to create a new permission
     public function create()
     {
         return Inertia::render('permissions/create');
     }
 
+    // Store a newly created permission
     public function store(StorePermissionRequest $request)
     {
         $permission = $this->permissionRepository->create([
@@ -45,6 +49,7 @@ class PermissionController extends Controller
             ->with('message', 'Permission created successfully.');
     }
 
+    // Display a specific permission
     public function show(Permission $permission)
     {
         return Inertia::render('permissions/show', [
@@ -65,6 +70,7 @@ class PermissionController extends Controller
         ]);
     }
 
+    // Show form to edit an existing permission
     public function edit(Permission $permission)
     {
         return Inertia::render('permissions/edit', [
