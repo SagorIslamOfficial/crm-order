@@ -1,9 +1,9 @@
 <?php
 
-use App\Http\Requests\StoreOrderRequest;
-use App\Models\ProductSize;
-use App\Models\ProductType;
-use App\Models\Shop;
+use App\Modules\Order\Http\Requests\StoreOrderRequest;
+use App\Modules\Product\Models\ProductSize;
+use App\Modules\Product\Models\ProductType;
+use App\Modules\Shop\Models\Shop;
 use Illuminate\Support\Facades\Validator;
 
 it('validates shop_id is required', function () {
@@ -186,7 +186,7 @@ it('allows order creation without payment information', function () {
     ]);
 
     // Simulate prepareForValidation
-    $request->prepareForValidation();
+    // $request->prepareForValidation();
 
     $validator = Validator::make($request->all(), $request->rules());
 

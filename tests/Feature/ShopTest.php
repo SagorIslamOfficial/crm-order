@@ -1,11 +1,19 @@
 <?php
 
-use App\Models\Order;
-use App\Models\Shop;
 use App\Models\User;
+use App\Modules\Order\Models\Order;
+use App\Modules\Shop\Models\Shop;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+
+use function Pest\Laravel\actingAs;
+use function Pest\Laravel\assertDatabaseHas;
+use function Pest\Laravel\assertDatabaseMissing;
+use function Pest\Laravel\delete;
+use function Pest\Laravel\get;
+use function Pest\Laravel\post;
+use function Pest\Laravel\put;
 
 uses(RefreshDatabase::class);
 
@@ -22,22 +30,25 @@ beforeEach(function () {
 });
 
 test('shops index page is displayed', function () {
+    /** @var \App\Models\User $user */
     $user = User::factory()->create();
     $user->assignRole('Administrator');
 
-    $response = $this->actingAs($user)->get('/shops');
+    actingAs($user);
 
-    $response->assertStatus(200);
+    get('/shops')->assertStatus(200);
 });
 
 test('shops can be listed', function () {
+    /** @var \App\Models\User $user */
     $user = User::factory()->create();
     $user->assignRole('Administrator');
     Shop::factory()->count(3)->create();
 
-    $response = $this->actingAs($user)->get('/shops');
+    actingAs($user);
 
-    $response->assertStatus(200)
+    get('/shops')
+        ->assertStatus(200)
         ->assertInertia(fn ($page) => $page
             ->component('shops/index')
             ->has('shops.data', 3)
@@ -47,33 +58,36 @@ test('shops can be listed', function () {
 });
 
 test('shops create page is displayed', function () {
+    /** @var \App\Models\User $user */
     $user = User::factory()->create();
     $user->assignRole('Administrator');
 
-    $response = $this->actingAs($user)->get('/shops/create');
+    actingAs($user);
 
-    $response->assertStatus(200)
+    get('/shops/create')
+        ->assertStatus(200)
         ->assertInertia(fn ($page) => $page
             ->component('shops/create')
         );
 });
 
 test('shops can be created', function () {
+    /** @var \App\Models\User $user */
     $user = User::factory()->create();
     $user->assignRole('Administrator');
 
-    $response = $this->actingAs($user)->post('/shops', [
+    actingAs($user);
+
+    post('/shops', [
         'code' => 'TST',
         'name' => 'Test Shop',
         'address' => '123 Test Street, Test City',
         'phone' => '01711234567',
         'website' => 'testshop.com',
         'is_active' => true,
-    ]);
+    ])->assertRedirect('/shops');
 
-    $response->assertRedirect('/shops');
-
-    $this->assertDatabaseHas('shops', [
+    assertDatabaseHas('shops', [
         'code' => 'TST',
         'name' => 'Test Shop',
         'address' => '123 Test Street, Test City',
@@ -85,101 +99,107 @@ test('shops can be created', function () {
 });
 
 test('shops creation requires code', function () {
+    /** @var \App\Models\User $user */
     $user = User::factory()->create();
     $user->assignRole('Administrator');
 
-    $response = $this->actingAs($user)->post('/shops', [
-        'name' => 'Test Shop',
-        'address' => '123 Test Street',
-        'phone' => '01711234567',
-        'is_active' => true,
-    ]);
+    actingAs($user);
 
-    $response->assertSessionHasErrors('code');
+    post('/shops', [
+        'location' => '123 Test Street',
+        'details' => 'Test shop details',
+    ])->assertSessionHasErrors('name');
 });
 
 test('shops creation requires unique code', function () {
+    /** @var \App\Models\User $user */
     $user = User::factory()->create();
     $user->assignRole('Administrator');
     Shop::factory()->create(['code' => 'TST']);
 
-    $response = $this->actingAs($user)->post('/shops', [
+    actingAs($user);
+
+    post('/shops', [
         'code' => 'TST',
         'name' => 'Test Shop',
         'address' => '123 Test Street',
         'phone' => '01711234567',
         'is_active' => true,
-    ]);
-
-    $response->assertSessionHasErrors('code');
+    ])->assertSessionHasErrors('code');
 });
 
 test('shops creation requires name', function () {
+    /** @var \App\Models\User $user */
     $user = User::factory()->create();
     $user->assignRole('Administrator');
 
-    $response = $this->actingAs($user)->post('/shops', [
+    actingAs($user);
+
+    post('/shops', [
         'code' => 'TST',
         'address' => '123 Test Street',
         'phone' => '01711234567',
         'is_active' => true,
-    ]);
-
-    $response->assertSessionHasErrors('name');
+    ])->assertSessionHasErrors('name');
 });
 
 test('shops creation requires address', function () {
+    /** @var \App\Models\User $user */
     $user = User::factory()->create();
     $user->assignRole('Administrator');
 
-    $response = $this->actingAs($user)->post('/shops', [
+    actingAs($user);
+
+    post('/shops', [
         'code' => 'TST',
         'name' => 'Test Shop',
         'phone' => '01711234567',
         'is_active' => true,
-    ]);
-
-    $response->assertSessionHasErrors('address');
+    ])->assertSessionHasErrors('address');
 });
 
 test('shops creation requires valid phone number', function () {
+    /** @var \App\Models\User $user */
     $user = User::factory()->create();
     $user->assignRole('Administrator');
 
-    $response = $this->actingAs($user)->post('/shops', [
+    actingAs($user);
+
+    post('/shops', [
         'code' => 'TST',
         'name' => 'Test Shop',
         'address' => '123 Test Street',
         'phone' => 'invalid',
         'is_active' => true,
-    ]);
-
-    $response->assertSessionHasErrors('phone');
+    ])->assertSessionHasErrors('phone');
 });
 
 test('shops creation requires 11 digit phone number', function () {
+    /** @var \App\Models\User $user */
     $user = User::factory()->create();
     $user->assignRole('Administrator');
 
-    $response = $this->actingAs($user)->post('/shops', [
+    actingAs($user);
+
+    post('/shops', [
         'code' => 'TST',
         'name' => 'Test Shop',
         'address' => '123 Test Street',
         'phone' => '0171123456', // Only 10 digits
         'is_active' => true,
-    ]);
-
-    $response->assertSessionHasErrors('phone');
+    ])->assertSessionHasErrors('phone');
 });
 
 test('shops show page is displayed', function () {
+    /** @var \App\Models\User $user */
     $user = User::factory()->create();
     $user->assignRole('Administrator');
     $shop = Shop::factory()->create();
 
-    $response = $this->actingAs($user)->get("/shops/{$shop->id}");
+    actingAs($user);
 
-    $response->assertStatus(200)
+    get("/shops/{$shop->id}")
+        ->assertStatus(200)
         ->assertInertia(fn ($page) => $page
             ->component('shops/show')
             ->has('shop')
@@ -187,13 +207,15 @@ test('shops show page is displayed', function () {
 });
 
 test('shops edit page is displayed', function () {
+    /** @var \App\Models\User $user */
     $user = User::factory()->create();
     $user->assignRole('Administrator');
     $shop = Shop::factory()->create();
 
-    $response = $this->actingAs($user)->get("/shops/{$shop->id}/edit");
+    actingAs($user);
 
-    $response->assertStatus(200)
+    get("/shops/{$shop->id}/edit")
+        ->assertStatus(200)
         ->assertInertia(fn ($page) => $page
             ->component('shops/edit')
             ->has('shop')
@@ -201,6 +223,7 @@ test('shops edit page is displayed', function () {
 });
 
 test('shops can be updated', function () {
+    /** @var \App\Models\User $user */
     $user = User::factory()->create();
     $user->assignRole('Administrator');
     $shop = Shop::factory()->create([
@@ -211,16 +234,16 @@ test('shops can be updated', function () {
         'is_active' => true,
     ]);
 
-    $response = $this->actingAs($user)->put("/shops/{$shop->id}", [
+    actingAs($user);
+
+    put("/shops/{$shop->id}", [
         'code' => 'NEW',
         'name' => 'New Shop',
         'address' => 'New Address',
         'phone' => '01722222222',
         'website' => 'newshop.com',
         'is_active' => false,
-    ]);
-
-    $response->assertRedirect('/shops');
+    ])->assertRedirect('/shops');
 
     $shop->refresh();
     expect($shop->code)->toBe('NEW');
@@ -232,37 +255,40 @@ test('shops can be updated', function () {
 });
 
 test('shops update requires unique code', function () {
+    /** @var \App\Models\User $user */
     $user = User::factory()->create();
     $user->assignRole('Administrator');
     $shop1 = Shop::factory()->create(['code' => 'SHOP1']);
     $shop2 = Shop::factory()->create(['code' => 'SHOP2']);
 
-    $response = $this->actingAs($user)->put("/shops/{$shop1->id}", [
+    actingAs($user);
+
+    put("/shops/{$shop1->id}", [
         'code' => 'SHOP2', // Trying to use shop2's code
         'name' => 'Test Shop',
         'address' => '123 Test Street',
         'phone' => '01711234567',
         'is_active' => true,
-    ]);
-
-    $response->assertSessionHasErrors('code');
+    ])->assertSessionHasErrors('code');
 });
 
 test('shops can be deleted', function () {
+    /** @var \App\Models\User $user */
     $user = User::factory()->create();
     $user->assignRole('Administrator');
     $shop = Shop::factory()->create();
 
-    $response = $this->actingAs($user)->delete("/shops/{$shop->id}");
+    actingAs($user);
 
-    $response->assertRedirect('/shops');
+    delete("/shops/{$shop->id}")->assertRedirect('/shops');
 
-    $this->assertDatabaseMissing('shops', [
+    assertDatabaseMissing('shops', [
         'id' => $shop->id,
     ]);
 });
 
 test('shops with associated orders cannot be deleted', function () {
+    /** @var \App\Models\User $user */
     $user = User::factory()->create();
     $user->assignRole('Administrator');
     $shop = Shop::factory()->create();
@@ -270,21 +296,24 @@ test('shops with associated orders cannot be deleted', function () {
     // Create an order associated with the shop
     Order::factory()->create(['shop_id' => $shop->id]);
 
-    $response = $this->actingAs($user)->delete("/shops/{$shop->id}");
+    actingAs($user);
 
-    $response->assertRedirect('/shops')
+    delete("/shops/{$shop->id}")->assertRedirect('/shops')
         ->assertSessionHasErrors('error');
 
-    $this->assertDatabaseHas('shops', [
+    assertDatabaseHas('shops', [
         'id' => $shop->id,
     ]);
 });
 
 test('shop next_order_sequence starts at 1', function () {
+    /** @var \App\Models\User $user */
     $user = User::factory()->create();
     $user->assignRole('Administrator');
 
-    $response = $this->actingAs($user)->post('/shops', [
+    actingAs($user);
+
+    post('/shops', [
         'code' => 'TST',
         'name' => 'Test Shop',
         'address' => '123 Test Street',

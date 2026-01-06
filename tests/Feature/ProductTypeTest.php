@@ -1,10 +1,19 @@
 <?php
 
-use App\Models\ProductType;
 use App\Models\User;
+use App\Modules\Order\Models\OrderItem;
+use App\Modules\Product\Models\ProductType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+
+use function Pest\Laravel\actingAs;
+use function Pest\Laravel\assertDatabaseHas;
+use function Pest\Laravel\assertDatabaseMissing;
+use function Pest\Laravel\delete;
+use function Pest\Laravel\get;
+use function Pest\Laravel\post;
+use function Pest\Laravel\put;
 
 uses(RefreshDatabase::class);
 
@@ -21,22 +30,24 @@ beforeEach(function () {
 });
 
 test('product types index page is displayed', function () {
+    /** @var \App\Models\User $user */
     $user = User::factory()->create();
     $user->assignRole('Administrator');
 
-    $response = $this->actingAs($user)->get('/product-types');
+    actingAs($user);
 
-    $response->assertStatus(200);
+    get('/product-types')->assertStatus(200);
 });
 
 test('product types can be listed', function () {
+    /** @var \App\Models\User $user */
     $user = User::factory()->create();
     $user->assignRole('Administrator');
     ProductType::factory()->count(3)->create();
 
-    $response = $this->actingAs($user)->get('/product-types');
+    actingAs($user);
 
-    $response->assertStatus(200)
+    get('/product-types')->assertStatus(200)
         ->assertInertia(fn ($page) => $page
             ->component('product-types/index')
             ->has('productTypes', 3)
@@ -44,66 +55,71 @@ test('product types can be listed', function () {
 });
 
 test('product types create page is displayed', function () {
+    /** @var \App\Models\User $user */
     $user = User::factory()->create();
     $user->assignRole('Administrator');
 
-    $response = $this->actingAs($user)->get('/product-types/create');
+    actingAs($user);
 
-    $response->assertStatus(200)
+    get('/product-types/create')->assertStatus(200)
         ->assertInertia(fn ($page) => $page
             ->component('product-types/create')
         );
 });
 
 test('product types can be created', function () {
+    /** @var \App\Models\User $user */
     $user = User::factory()->create();
     $user->assignRole('Administrator');
 
-    $response = $this->actingAs($user)->post('/product-types', [
+    actingAs($user);
+
+    post('/product-types', [
         'name' => 'Test Product Type',
         'is_active' => true,
-    ]);
+    ])->assertRedirect('/product-types');
 
-    $response->assertRedirect('/product-types');
-
-    $this->assertDatabaseHas('product_types', [
+    assertDatabaseHas('product_types', [
         'name' => 'Test Product Type',
         'is_active' => true,
     ]);
 });
 
 test('product types creation requires name', function () {
+    /** @var \App\Models\User $user */
     $user = User::factory()->create();
     $user->assignRole('Administrator');
 
-    $response = $this->actingAs($user)->post('/product-types', [
-        'is_active' => true,
-    ]);
+    actingAs($user);
 
-    $response->assertSessionHasErrors('name');
+    post('/product-types', [
+        'is_active' => true,
+    ])->assertSessionHasErrors('name');
 });
 
 test('product types creation requires unique name', function () {
+    /** @var \App\Models\User $user */
     $user = User::factory()->create();
     $user->assignRole('Administrator');
     ProductType::factory()->create(['name' => 'Existing Type']);
 
-    $response = $this->actingAs($user)->post('/product-types', [
+    actingAs($user);
+
+    post('/product-types', [
         'name' => 'Existing Type',
         'is_active' => true,
-    ]);
-
-    $response->assertSessionHasErrors('name');
+    ])->assertSessionHasErrors('name');
 });
 
 test('product types show page is displayed', function () {
+    /** @var \App\Models\User $user */
     $user = User::factory()->create();
     $user->assignRole('Administrator');
     $productType = ProductType::factory()->create();
 
-    $response = $this->actingAs($user)->get("/product-types/{$productType->id}");
+    actingAs($user);
 
-    $response->assertStatus(200)
+    get("/product-types/{$productType->id}")->assertStatus(200)
         ->assertInertia(fn ($page) => $page
             ->component('product-types/show')
             ->has('productType')
@@ -111,13 +127,14 @@ test('product types show page is displayed', function () {
 });
 
 test('product types edit page is displayed', function () {
+    /** @var \App\Models\User $user */
     $user = User::factory()->create();
     $user->assignRole('Administrator');
     $productType = ProductType::factory()->create();
 
-    $response = $this->actingAs($user)->get("/product-types/{$productType->id}/edit");
+    actingAs($user);
 
-    $response->assertStatus(200)
+    get("/product-types/{$productType->id}/edit")->assertStatus(200)
         ->assertInertia(fn ($page) => $page
             ->component('product-types/edit')
             ->has('productType')
@@ -125,6 +142,7 @@ test('product types edit page is displayed', function () {
 });
 
 test('product types can be updated', function () {
+    /** @var \App\Models\User $user */
     $user = User::factory()->create();
     $user->assignRole('Administrator');
     $productType = ProductType::factory()->create([
@@ -132,12 +150,12 @@ test('product types can be updated', function () {
         'is_active' => true,
     ]);
 
-    $response = $this->actingAs($user)->put("/product-types/{$productType->id}", [
+    actingAs($user);
+
+    put("/product-types/{$productType->id}", [
         'name' => 'Updated Name',
         'is_active' => false,
-    ]);
-
-    $response->assertRedirect('/product-types');
+    ])->assertRedirect('/product-types');
 
     $productType->refresh();
     expect($productType->name)->toBe('Updated Name');
@@ -145,48 +163,51 @@ test('product types can be updated', function () {
 });
 
 test('product types update requires unique name', function () {
+    /** @var \App\Models\User $user */
     $user = User::factory()->create();
     $user->assignRole('Administrator');
     $productType1 = ProductType::factory()->create(['name' => 'Type 1']);
     $productType2 = ProductType::factory()->create(['name' => 'Type 2']);
 
-    $response = $this->actingAs($user)->put("/product-types/{$productType1->id}", [
+    actingAs($user);
+
+    put("/product-types/{$productType1->id}", [
         'name' => 'Type 2',
         'is_active' => true,
-    ]);
-
-    $response->assertSessionHasErrors('name');
+    ])->assertSessionHasErrors('name');
 });
 
 test('product types can be deleted', function () {
+    /** @var \App\Models\User $user */
     $user = User::factory()->create();
     $user->assignRole('Administrator');
     $productType = ProductType::factory()->create();
 
-    $response = $this->actingAs($user)->delete("/product-types/{$productType->id}");
+    actingAs($user);
 
-    $response->assertRedirect('/product-types');
+    delete("/product-types/{$productType->id}")->assertRedirect('/product-types');
 
-    $this->assertDatabaseMissing('product_types', [
+    assertDatabaseMissing('product_types', [
         'id' => $productType->id,
     ]);
 });
 
 test('product types with associated orders cannot be deleted', function () {
+    /** @var \App\Models\User $user */
     $user = User::factory()->create();
     $user->assignRole('Administrator');
     $productType = ProductType::factory()->create();
     // Create an order item that references this product type
-    \App\Models\OrderItem::factory()->create([
+    OrderItem::factory()->create([
         'product_type_id' => $productType->id,
     ]);
 
-    $response = $this->actingAs($user)->delete("/product-types/{$productType->id}");
+    actingAs($user);
 
-    $response->assertRedirect('/product-types');
-    $response->assertSessionHasErrors('error', 'Cannot delete product type with associated orders.');
+    delete("/product-types/{$productType->id}")->assertRedirect('/product-types')
+        ->assertSessionHasErrors('error', 'Cannot delete product type with associated orders.');
 
-    $this->assertDatabaseHas('product_types', [
+    assertDatabaseHas('product_types', [
         'id' => $productType->id,
     ]);
 });

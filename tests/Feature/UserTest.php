@@ -4,10 +4,17 @@ use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
+use function Pest\Laravel\actingAs;
+use function Pest\Laravel\assertDatabaseHas;
+use function Pest\Laravel\assertDatabaseMissing;
+use function Pest\Laravel\get;
+use function Pest\Laravel\seed;
+use function Pest\Laravel\withHeaders;
+
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->seed(RolePermissionSeeder::class);
+    seed(RolePermissionSeeder::class);
 });
 
 // Helper function to make authenticated requests with CSRF token
@@ -15,45 +22,50 @@ function makeRequest($method, $uri, $data = [], $user = null)
 {
     if ($user) {
         // Get CSRF token from a page visit
-        test()->actingAs($user)->get('/users');
+        actingAs($user);
+        get('/users');
         $csrfToken = session()->token();
 
-        return test()->actingAs($user)
-            ->withHeaders([
-                'X-CSRF-TOKEN' => $csrfToken,
-                'X-Inertia' => 'true',
-                'X-Requested-With' => 'XMLHttpRequest',
-            ])
-            ->{$method}($uri, array_merge($data, ['_token' => $csrfToken]));
+        actingAs($user);
+
+        return withHeaders([
+            'X-CSRF-TOKEN' => $csrfToken,
+            'X-Inertia' => 'true',
+            'X-Requested-With' => 'XMLHttpRequest',
+        ])->{$method}($uri, array_merge($data, ['_token' => $csrfToken]));
     }
 
-    return test()->{$method}($uri, $data);
+    // If no user provided, make unauthenticated request
+    return call_user_func($method, $uri, $data);
 }
 
 test('users index page is displayed', function () {
+    /** @var \App\Models\User $user */
     $user = User::factory()->create();
     $user->assignRole('Administrator');
 
-    $response = $this->actingAs($user)->get('/users');
+    actingAs($user);
 
-    $response->assertSuccessful();
+    get('/users')->assertSuccessful();
 });
 
 test('users can be listed', function () {
+    /** @var \App\Models\User $admin */
     $admin = User::factory()->create(['name' => 'Admin User']);
     $admin->assignRole('Administrator');
 
     User::factory()->count(3)->create();
 
-    $response = $this->actingAs($admin)->get('/users');
+    actingAs($admin);
 
-    $response->assertSuccessful();
-    $response->assertInertia(fn ($page) => $page
-        ->has('users.data', 4) // admin + 3 created users
-    );
+    get('/users')
+        ->assertSuccessful()
+        ->assertInertia(fn ($page) => $page
+            ->has('users.data', 4) // admin + 3 created users
+        );
 
     // Verify the admin user is in the response
-    $response->assertInertia(fn ($page) => $page
+    get('/users')->assertInertia(fn ($page) => $page
         ->where('users.data', function ($users) {
             $names = collect($users)->pluck('name');
 
@@ -63,28 +75,31 @@ test('users can be listed', function () {
 });
 
 test('users can be searched', function () {
+    /** @var \App\Models\User $admin */
     $admin = User::factory()->create();
     $admin->assignRole('Administrator');
 
     $user1 = User::factory()->create(['name' => 'John Doe']);
     $user2 = User::factory()->create(['name' => 'Jane Smith']);
 
-    $response = $this->actingAs($admin)->get('/users?search=John');
+    actingAs($admin);
 
-    $response->assertSuccessful();
-    $response->assertInertia(fn ($page) => $page
-        ->has('users.data', 1)
-        ->where('users.data.0.name', 'John Doe')
-    );
+    get('/users?search=John')
+        ->assertSuccessful()
+        ->assertInertia(fn ($page) => $page
+            ->has('users.data', 1)
+            ->where('users.data.0.name', 'John Doe')
+        );
 });
 
 test('create user page is displayed', function () {
+    /** @var \App\Models\User $user */
     $user = User::factory()->create();
     $user->assignRole('Administrator');
 
-    $response = $this->actingAs($user)->get('/users/create');
+    actingAs($user);
 
-    $response->assertSuccessful();
+    get('/users/create')->assertSuccessful();
 });
 
 test('user can be created', function () {
@@ -104,7 +119,7 @@ test('user can be created', function () {
     $response->assertRedirect('/users');
     $response->assertSessionHas('message', 'User created successfully.');
 
-    $this->assertDatabaseHas('users', [
+    assertDatabaseHas('users', [
         'name' => 'Test User',
         'email' => 'test@example.com',
     ]);
@@ -161,30 +176,35 @@ test('duplicate email is rejected', function () {
 });
 
 test('user can be viewed', function () {
+    /** @var \App\Models\User $admin */
     $admin = User::factory()->create();
     $admin->assignRole('Administrator');
 
+    /** @var \App\Models\User $user */
     $user = User::factory()->create();
     $user->assignRole('Salesperson');
 
-    $response = $this->actingAs($admin)->get("/users/{$user->id}");
+    actingAs($admin);
 
-    $response->assertSuccessful();
-    $response->assertInertia(fn ($page) => $page
-        ->where('user.name', $user->name)
-        ->where('user.email', $user->email)
-    );
+    get("/users/{$user->id}")
+        ->assertSuccessful()
+        ->assertInertia(fn ($page) => $page
+            ->where('user.name', $user->name)
+            ->where('user.email', $user->email)
+        );
 });
 
 test('edit user page is displayed', function () {
+    /** @var \App\Models\User $admin */
     $admin = User::factory()->create();
     $admin->assignRole('Administrator');
 
+    /** @var \App\Models\User $user */
     $user = User::factory()->create();
 
-    $response = $this->actingAs($admin)->get("/users/{$user->id}/edit");
+    actingAs($admin);
 
-    $response->assertSuccessful();
+    get("/users/{$user->id}/edit")->assertSuccessful();
 });
 
 test('user can be updated', function () {
@@ -249,7 +269,7 @@ test('user can be deleted', function () {
     $response->assertRedirect('/users');
     $response->assertSessionHas('message', 'User deleted successfully.');
 
-    $this->assertDatabaseMissing('users', ['id' => $user->id]);
+    assertDatabaseMissing('users', ['id' => $user->id]);
 });
 
 test('user deletion requires permission', function () {

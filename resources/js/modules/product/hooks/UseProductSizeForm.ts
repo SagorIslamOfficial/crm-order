@@ -1,0 +1,93 @@
+import { router } from '@inertiajs/react';
+import { useCallback, useState } from 'react';
+import { ProductService } from '../services/ProductService';
+import type { ProductSizeForm } from '../types';
+
+export function useProductSizeForm(initialData?: Partial<ProductSizeForm>) {
+    const [data, setData] = useState<ProductSizeForm>({
+        product_type_id: initialData?.product_type_id || '',
+        size_label: initialData?.size_label || '',
+        price: initialData?.price || '0',
+        description: initialData?.description || '',
+        is_active: initialData?.is_active ?? true,
+    });
+    const [errors, setErrors] = useState<Record<string, string>>({});
+    const [processing, setProcessing] = useState(false);
+
+    const updateField = useCallback(
+        (field: keyof ProductSizeForm, value: string | number | boolean) => {
+            setData((prev) => ({ ...prev, [field]: value }));
+            // Clear error when user starts typing
+            if (errors[field]) {
+                setErrors((prev) => ({ ...prev, [field]: '' }));
+            }
+        },
+        [errors],
+    );
+
+    const submit = useCallback(
+        async (url: string, method: 'post' | 'put' = 'post') => {
+            try {
+                setProcessing(true);
+                setErrors({});
+
+                if (method === 'post') {
+                    await ProductService.createProductSize(data);
+                } else {
+                    throw new Error('Update method requires product size ID');
+                }
+
+                router.visit(url, {
+                    method: 'get',
+                    replace: true,
+                });
+            } catch (err: unknown) {
+                const error = err as {
+                    response?: { data?: { errors?: Record<string, string[]> } };
+                    message?: string;
+                };
+                if (error?.response?.data?.errors) {
+                    // Flatten array errors to single strings
+                    const flattenedErrors: Record<string, string> = {};
+                    Object.entries(error.response.data.errors).forEach(
+                        ([key, messages]) => {
+                            flattenedErrors[key] = Array.isArray(messages)
+                                ? messages[0]
+                                : messages;
+                        },
+                    );
+                    setErrors(flattenedErrors);
+                } else {
+                    setErrors({
+                        general: error.message || 'An error occurred',
+                    });
+                }
+            } finally {
+                setProcessing(false);
+            }
+        },
+        [data],
+    );
+
+    const reset = useCallback(() => {
+        setData({
+            product_type_id: '',
+            size_label: '',
+            price: '0',
+            description: '',
+            is_active: true,
+        });
+        setErrors({});
+    }, []);
+
+    return {
+        data,
+        errors,
+        processing,
+        updateField,
+        submit,
+        reset,
+        setData,
+        setErrors,
+    };
+}
