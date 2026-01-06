@@ -2,18 +2,33 @@
 
 namespace App\Repositories;
 
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
 use Spatie\Permission\Models\Permission;
 
 class PermissionRepository
 {
-    public function getAll(): \Illuminate\Database\Eloquent\Collection
+    const DEFAULT_PER_PAGE = 10;
+
+    // Get all permissions.
+    public function getAll(): Collection
     {
         return Permission::orderBy('name')->get();
     }
 
-    public function getPaginated(int $perPage = 15): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    // Get paginated permissions.
+    public function getPaginated(?int $perPage = null, array $filters = []): LengthAwarePaginator
     {
-        return Permission::orderBy('name')->paginate($perPage);
+        $perPage = $perPage ?? self::DEFAULT_PER_PAGE;
+
+        $query = Permission::with(['roles', 'users'])->orderBy('name');
+
+        if (! empty($filters['search'])) {
+            $search = $filters['search'];
+            $query->where('name', 'like', "%{$search}%");
+        }
+
+        return $query->paginate($perPage);
     }
 
     public function findById(int $id): Permission
