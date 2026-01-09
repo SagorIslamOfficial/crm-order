@@ -1,40 +1,63 @@
-import AppLayout from '@/layouts/app-layout';
-import { ShopForm } from '@/modules/shop';
-import { index, create } from '@/routes/shops';
+import { FormActions, InfoCard } from '@/components/common';
+import { MainPageLayout } from '@/components/common/layout/MainPageLayout';
+import { ShopFormFields, useShopForm } from '@/components/modules/shop';
+import { index as shopsIndex } from '@/routes/shops';
 import { type BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/react';
+import { router } from '@inertiajs/react';
+import { ArrowLeft } from 'lucide-react';
+import type { FormEvent } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Shops',
-        href: index().url,
+        href: shopsIndex().url,
     },
     {
         title: 'Create',
-        href: create().url,
+        href: '#',
     },
 ];
 
 export default function ShopsCreate() {
-    return (
-        <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Create Shop" />
-            <div className="m-auto flex h-full w-4xl flex-1 flex-col gap-6 p-4 md:p-6">
-                {/* Header */}
-                <div className="flex items-center gap-4">
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tight">
-                            Create Shop
-                        </h1>
-                        <p className="text-muted-foreground">
-                            Add a new shop location to the system
-                        </p>
-                    </div>
-                </div>
+    const { data, errors, processing, updateField, submit } = useShopForm();
 
-                {/* Shop Form Component */}
-                <ShopForm />
-            </div>
-        </AppLayout>
+    const handleSubmit = async (e: FormEvent) => {
+        e.preventDefault();
+        try {
+            await submit('POST');
+        } catch (error) {
+            console.error('Failed to create shop:', error);
+        }
+    };
+
+    return (
+        <MainPageLayout
+            title="Create Shop"
+            description="Add a new shop to the system"
+            breadcrumbs={breadcrumbs}
+            backButton={{
+                label: 'Back',
+                href: shopsIndex().url,
+                icon: ArrowLeft,
+            }}
+            useCard={false}
+        >
+            <form onSubmit={handleSubmit} className="mx-auto max-w-2xl">
+                <InfoCard title="Shop Details">
+                    <ShopFormFields
+                        data={data}
+                        errors={errors}
+                        onChange={updateField}
+                    />
+                </InfoCard>
+
+                <FormActions
+                    onCancel={() => router.visit(shopsIndex().url)}
+                    submitLabel="Create Shop"
+                    isProcessing={processing}
+                    className="mt-6"
+                />
+            </form>
+        </MainPageLayout>
     );
 }

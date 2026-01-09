@@ -18,7 +18,6 @@ return new class extends Migration
             $table->text('address');
             $table->string('phone', 11);
             $table->string('website')->nullable();
-            $table->text('location')->nullable();
             $table->text('details')->nullable();
             $table->boolean('is_active')->default(true);
             $table->unsignedInteger('next_order_sequence')->default(1);

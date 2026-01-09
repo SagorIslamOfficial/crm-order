@@ -19,7 +19,6 @@ class Shop extends Model
         'address',
         'phone',
         'website',
-        'location',
         'details',
         'is_active',
         'next_order_sequence',

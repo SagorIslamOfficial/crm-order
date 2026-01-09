@@ -15,8 +15,6 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->uuid('product_type_id');
             $table->string('size_label');
-            $table->decimal('price', 12, 2)->default(0);
-            $table->text('description')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
 

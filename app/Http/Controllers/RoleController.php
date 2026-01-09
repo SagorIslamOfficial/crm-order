@@ -27,7 +27,7 @@ class RoleController extends Controller
                 'name' => $role->name,
                 'guard_name' => $role->guard_name,
                 'permissions' => $role->permissions->pluck('name')->toArray(),
-                'users_count' => $role->users_count ?? 0,
+                'users_count' => $role->users_count,
                 'created_at' => $role->created_at->format('Y-m-d'),
             ];
         });

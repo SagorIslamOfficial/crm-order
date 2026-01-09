@@ -45,6 +45,7 @@ class PermissionRepository
     {
         return Permission::create([
             'name' => $data['name'],
+            'guard_name' => $data['guard_name'] ?? 'web',
         ]);
     }
 
@@ -52,6 +53,7 @@ class PermissionRepository
     {
         $permission->update([
             'name' => $data['name'],
+            'guard_name' => $data['guard_name'] ?? $permission->guard_name,
         ]);
 
         return $permission->fresh();
@@ -77,6 +79,7 @@ class PermissionRepository
         return [
             'id' => $permission->id,
             'name' => $permission->name,
+            'guard_name' => $permission->guard_name,
             'roles_count' => $this->getRolesCount($permission),
             'users_count' => $this->getUsersCount($permission),
             'created_at' => $permission->created_at,

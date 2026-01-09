@@ -51,6 +51,7 @@ class UserController extends Controller
                 return [
                     'name' => $role->name,
                     'label' => ucwords(str_replace('_', ' ', $role->name)),
+                    'permissions' => $role->permissions->pluck('name')->toArray(),
                 ];
             });
 

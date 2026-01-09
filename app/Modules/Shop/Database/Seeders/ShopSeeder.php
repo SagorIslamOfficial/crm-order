@@ -7,9 +7,7 @@ use Illuminate\Database\Seeder;
 
 class ShopSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
+    // Run the database seeds.
     public function run(): void
     {
         $shops = [
@@ -19,7 +17,6 @@ class ShopSeeder extends Seeder
                 'address' => 'House 14, Road 4, Sector 12, Uttara, Dhaka, BD',
                 'phone' => '01712345678',
                 'website' => 'https://www.platinumys.com',
-                'location' => 'Uttara, Dhaka, Bangladesh',
                 'details' => 'Main shop located in Uttara',
             ],
             [
@@ -28,7 +25,6 @@ class ShopSeeder extends Seeder
                 'address' => '1st Floor, House: 139, Block: F, Road: 5, Journalist R/A, Pallabi, Mirpur, Dhaka-1216, Bangladesh',
                 'phone' => '01787654321',
                 'website' => 'https://www.platinumys.com/mirpur',
-                'location' => 'Mirpur, Dhaka, Bangladesh',
                 'details' => 'Branch shop located in Mirpur',
             ],
             [
@@ -37,7 +33,6 @@ class ShopSeeder extends Seeder
                 'address' => 'Shop No- 12, 1st Floor, New Market, Chattogram, BD',
                 'phone' => '01711223344',
                 'website' => 'https://www.platinumys.com/chattogram',
-                'location' => 'Chattogram, Bangladesh',
                 'details' => 'Branch shop located in Chattogram',
             ],
             [
@@ -46,7 +41,6 @@ class ShopSeeder extends Seeder
                 'address' => 'House 23, Road 5, New Market, Khulna, BD',
                 'phone' => '01744332211',
                 'website' => 'https://www.platinumys.com/khulna',
-                'location' => 'Khulna, Bangladesh',
                 'details' => 'Branch shop located in Khulna',
             ],
         ];
@@ -59,7 +53,6 @@ class ShopSeeder extends Seeder
                     'address' => $shop['address'],
                     'phone' => $shop['phone'],
                     'website' => $shop['website'],
-                    'location' => $shop['location'],
                     'details' => $shop['details'],
                 ]
             );

@@ -27,9 +27,6 @@ class PaymentServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Load module routes
-        $this->loadRoutesFrom(__DIR__.'/../Routes/web.php');
-
         // Load module migrations
         $this->loadMigrationsFrom(__DIR__.'/../Database/Migrations');
     }

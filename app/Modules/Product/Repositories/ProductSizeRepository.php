@@ -7,22 +7,15 @@ use App\Modules\Product\Models\ProductSize;
 use App\Repositories\BaseRepository;
 use Illuminate\Pagination\LengthAwarePaginator;
 
-/**
- * @extends BaseRepository<ProductSize>
- */
 class ProductSizeRepository extends BaseRepository implements ProductSizeRepositoryInterface
 {
-    /**
-     * Get the model class name.
-     */
+    // Model
     protected function model(): string
     {
         return ProductSize::class;
     }
 
-    /**
-     * @return LengthAwarePaginator<ProductSize>
-     */
+    // Get paginated
     public function getPaginated(?int $perPage = null, array $filters = []): LengthAwarePaginator
     {
         $perPage = $this->getPerPage($perPage);
@@ -32,7 +25,7 @@ class ProductSizeRepository extends BaseRepository implements ProductSizeReposit
         if (! empty($filters['search'])) {
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
+                $q->where('size_label', 'like', "%{$search}%")
                     ->orWhereHas('productType', function ($q) use ($search) {
                         $q->where('name', 'like', "%{$search}%");
                     });
@@ -43,12 +36,22 @@ class ProductSizeRepository extends BaseRepository implements ProductSizeReposit
             $query->where('product_type_id', $filters['product_type_id']);
         }
 
-        return $query->orderBy('created_at', 'desc')->paginate($perPage);
+        if (isset($filters['is_active']) && $filters['is_active'] !== '') {
+            $query->where('is_active', (bool) $filters['is_active']);
+        }
+
+        if (! empty($filters['date_from'])) {
+            $query->where('created_at', '>=', $filters['date_from']);
+        }
+
+        if (! empty($filters['date_to'])) {
+            $query->where('created_at', '<=', $filters['date_to']);
+        }
+
+        return $query->orderBy('created_at', 'desc')->paginate($perPage)->withQueryString();
     }
 
-    /**
-     * @return array<int, array{id: string, name: string}>
-     */
+    // Get by product type
     public function getByProductType(string $productTypeId): array
     {
         return $this->query()

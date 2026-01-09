@@ -23,7 +23,7 @@ class RoleRepository
     {
         $perPage = $perPage ?? self::DEFAULT_PER_PAGE;
 
-        $query = Role::with(['permissions', 'users']);
+        $query = Role::with(['permissions'])->withCount('users');
 
         if (! empty($filters['search'])) {
             $search = $filters['search'];

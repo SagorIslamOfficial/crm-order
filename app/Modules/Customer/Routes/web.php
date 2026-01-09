@@ -4,10 +4,6 @@ use App\Modules\Customer\Http\Controllers\CustomerController;
 use Illuminate\Support\Facades\Route;
 
 Route::group([], function () {
-    // Customer lookup by phone
-    Route::get('api/customers/lookup', [CustomerController::class, 'lookup'])
-        ->name('customers.lookup');
-
     // Customers management
     Route::get('customers', [CustomerController::class, 'index'])
         ->middleware('permission:customers.view')

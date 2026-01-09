@@ -26,15 +26,47 @@ class ProductTypeRepository extends BaseRepository implements ProductTypeReposit
      */
     public function getPaginated(?int $perPage = null, array $filters = []): LengthAwarePaginator
     {
+        return $this->getPaginatedWithFilters($perPage, $filters);
+    }
+
+    /**
+     * @return LengthAwarePaginator<ProductType>
+     */
+    public function getPaginatedWithFilters(?int $perPage = null, array $filters = []): LengthAwarePaginator
+    {
         $perPage = $this->getPerPage($perPage);
 
-        $query = $this->query()->with('sizes');
+        $query = $this->query()->with('sizes.orderItems');
 
         if (! empty($filters['search'])) {
             $query->where('name', 'like', '%'.$filters['search'].'%');
         }
 
-        return $query->orderBy('created_at', 'desc')->paginate($perPage);
+        if (isset($filters['is_active']) && $filters['is_active'] !== '') {
+            $query->where('is_active', (bool) $filters['is_active']);
+        }
+
+        if (! empty($filters['date_from'])) {
+            $query->where('created_at', '>=', $filters['date_from']);
+        }
+
+        if (! empty($filters['date_to'])) {
+            $query->where('created_at', '<=', $filters['date_to']);
+        }
+
+        $paginator = $query->withCount('sizes')->orderBy('created_at', 'desc')->paginate($perPage);
+
+        // Calculate orders_count for each product type
+        $paginator->getCollection()->transform(function (ProductType $productType) {
+            $productType->orders_count = $productType->sizes
+                ->flatMap(fn ($size) => $size->orderItems->pluck('order_id'))
+                ->unique()
+                ->count();
+
+            return $productType;
+        });
+
+        return $paginator;
     }
 
     /**

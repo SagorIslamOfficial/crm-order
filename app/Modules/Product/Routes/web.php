@@ -35,9 +35,6 @@ Route::group([], function () {
         ->name('product-types.destroy');
 
     // Product Sizes
-    Route::get('api/product-sizes/by-type', [ProductSizeController::class, 'byType'])
-        ->name('product-sizes.by-type');
-
     Route::get('product-sizes', [ProductSizeController::class, 'index'])
         ->middleware('permission:product-sizes.view')
         ->name('product-sizes.index');

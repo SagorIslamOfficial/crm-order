@@ -11,16 +11,12 @@ class StoreProductSizeRequest extends FormRequest
         return true;
     }
 
-    /**
-     * @return array<string, array<int, string>>
-     */
+    // Validation rules
     public function rules(): array
     {
         return [
             'product_type_id' => ['required', 'exists:product_types,id'],
             'size_label' => ['required', 'string', 'max:255', 'unique:product_sizes,size_label,NULL,id,product_type_id,'.$this->product_type_id],
-            'price' => ['required', 'numeric', 'min:0'],
-            'description' => ['nullable', 'string'],
             'is_active' => ['boolean'],
         ];
     }

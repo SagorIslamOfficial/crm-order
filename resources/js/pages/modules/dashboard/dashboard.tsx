@@ -1,7 +1,7 @@
-import { Dashboard } from '@/modules/dashboard';
-import type { DashboardStatistics } from '@/modules/dashboard/types';
+import { Dashboard } from '@/components/modules/dashboard';
+import type { DashboardStatistics } from '@/components/modules/dashboard/types';
 import { dashboard } from '@/routes';
-import { MainPageLayout } from '@/shared/components/layout/MainPageLayout';
+import { MainPageLayout } from '@/components/common/layout/MainPageLayout';
 import type { BreadcrumbItem, PageProps } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [

@@ -36,9 +36,6 @@ class OrderServiceProvider extends ServiceProvider
         // Register policies
         Gate::policy(Order::class, OrderPolicy::class);
 
-        // Load module routes
-        $this->loadRoutesFrom(__DIR__.'/../Routes/web.php');
-
         // Load module migrations
         $this->loadMigrationsFrom(__DIR__.'/../Database/Migrations');
 

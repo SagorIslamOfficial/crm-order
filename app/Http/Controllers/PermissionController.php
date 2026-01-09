@@ -21,7 +21,9 @@ class PermissionController extends Controller
     {
         $search = $request->query('search');
 
-        $permissions = $this->permissionRepository->getPaginated()->through(function ($permission) {
+        $permissions = $this->permissionRepository->getPaginated(filters: [
+            'search' => $search,
+        ])->through(function ($permission) {
             return $this->permissionRepository->getPermissionWithCounts($permission);
         });
 

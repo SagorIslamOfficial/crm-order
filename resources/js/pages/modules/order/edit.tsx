@@ -1,20 +1,20 @@
 import { Button } from '@/components/ui/button';
-import { CustomerForm } from '@/modules/order/components/CustomerForm';
-import { OrderDetails } from '@/modules/order/components/OrderDetails';
-import { OrderItemsFormTable } from '@/modules/order/components/OrderItemsFormTable';
-import { OrderSummary } from '@/modules/order/components/OrderSummary';
-import { PaymentAndDiscountSection } from '@/modules/order/components/PaymentAndDiscountSection';
+import { CustomerForm } from '@/components/modules/order/components/CustomerForm';
+import { OrderDetails } from '@/components/modules/order/components/OrderDetails';
+import { OrderItemsFormTable } from '@/components/modules/order/components/OrderItemsFormTable';
+import { OrderSummary } from '@/components/modules/order/components/OrderSummary';
+import { PaymentAndDiscountSection } from '@/components/modules/order/components/PaymentAndDiscountSection';
 import type {
     EditOrderPageProps,
     OrderItemFormData,
-} from '@/modules/order/types';
+} from '@/components/modules/order/types';
 import { dashboard } from '@/routes';
 import {
     index as ordersIndex,
     show as ordersShow,
     update as ordersUpdate,
 } from '@/routes/orders';
-import { MainPageLayout } from '@/shared/components/layout/MainPageLayout';
+import { MainPageLayout } from '@/components/common/layout/MainPageLayout';
 import { type BreadcrumbItem } from '@/types';
 import { Form } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';

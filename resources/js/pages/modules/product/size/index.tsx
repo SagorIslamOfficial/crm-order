@@ -1,125 +1,109 @@
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
-import { ProductSizeList } from '@/modules/product/components';
-import { type ProductSize, type ProductType } from '@/modules/product/types';
-import { destroy, index } from '@/routes/product-sizes';
-import {
+    CommonDataTable,
     ConfirmDialog,
+    DataTableExport,
+} from '@/components/common';
+import {
     MainPageLayout,
     useDeleteDialog,
-} from '@/shared/components';
-import { useInertiaProps } from '@/shared/hooks/UseInertiaProps';
+} from '@/components/common/layout/MainPageLayout';
+import { UseProductSizeColumns } from '@/components/modules/product/size/UseProductSizeColumns';
+import type {
+    ProductSize,
+    ProductSizeIndexProps,
+} from '@/components/modules/product/size/types/Product.types';
+import { useInertiaProps } from '@/hooks';
+import { dashboard } from '@/routes';
+import {
+    create as productSizesCreate,
+    destroy as productSizesDestroy,
+    index as productSizesIndex,
+} from '@/routes/product-sizes';
 import { type BreadcrumbItem } from '@/types';
 import { router } from '@inertiajs/react';
-import { Plus, Search } from 'lucide-react';
-import { useState } from 'react';
-
-interface ProductSizeIndexProps {
-    productSizes: {
-        data: ProductSize[];
-        current_page: number;
-        last_page: number;
-        per_page: number;
-        total: number;
-    };
-    productTypes: ProductType[];
-    search?: string;
-    productTypeId?: string;
-}
+import type { Table } from '@tanstack/react-table';
+import { Plus } from 'lucide-react';
+import * as React from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
+        title: 'Dashboard',
+        href: dashboard().url,
+    },
+    {
         title: 'Product Sizes',
-        href: '/product-sizes',
+        href: productSizesIndex().url,
     },
 ];
 
 export default function ProductSizesIndex() {
-    const { productSizes, productTypes, search, productTypeId } =
-        useInertiaProps<ProductSizeIndexProps>();
-    const [typeFilter, setTypeFilter] = useState(productTypeId || 'all');
+    const { productSizes } = useInertiaProps<ProductSizeIndexProps>();
+    const searchParams = new URLSearchParams(window.location.search);
+    const [globalFilter, setGlobalFilter] = React.useState(
+        searchParams.get('search') || '',
+    );
+    const [table, setTable] = React.useState<Table<ProductSize> | null>(null);
 
     const deleteDialog = useDeleteDialog<ProductSize>({
         getItemName: (productSize) => productSize.size_label,
         onDelete: (productSize) => {
-            router.delete(destroy(productSize.id));
+            router.delete(productSizesDestroy(productSize.id).url);
         },
     });
 
-    const handleSearch = (searchQuery: string) => {
-        const params: Record<string, string> = {};
-        if (searchQuery) params.search = searchQuery;
-        if (typeFilter && typeFilter !== 'all')
-            params.product_type_id = typeFilter;
+    const columns = UseProductSizeColumns({
+        onDelete: (productSize) => deleteDialog.show(productSize),
+    });
 
-        router.get(index(), params);
-    };
-
-    const handleTypeFilterChange = (value: string) => {
-        setTypeFilter(value);
-        const params: Record<string, string> = {};
-        if (search) params.search = search;
-        if (value && value !== 'all') params.product_type_id = value;
-
-        router.get(index(), params);
-    };
-
-    const hasActiveFilters = search || (typeFilter && typeFilter !== 'all');
+    const exportColumns = [
+        { key: 'size_label', label: 'Size Label' },
+        { key: 'product_type.name', label: 'Product Type' },
+        { key: 'is_active', label: 'Active' },
+    ];
 
     return (
         <MainPageLayout
             title="Product Sizes"
             description="Manage product sizes for different product types"
             breadcrumbs={breadcrumbs}
+            useCard={false}
+            search={{
+                value: globalFilter,
+                placeholder: 'Search product sizes...',
+                onSearch: (value) => {
+                    setGlobalFilter(value);
+                    router.get(
+                        productSizesIndex().url,
+                        { search: value },
+                        { preserveState: true, preserveScroll: true },
+                    );
+                },
+            }}
             createButton={{
-                label: 'Add Product Size',
-                href: '/product-sizes/create',
+                label: 'New Product Size',
+                href: productSizesCreate().url,
                 icon: Plus,
                 permission: 'product-sizes.create',
             }}
-            search={{
-                placeholder: 'Search product sizes...',
-                defaultValue: search,
-                onSearch: handleSearch,
-                icon: Search,
-            }}
-            showClearFilters={hasActiveFilters}
-            onClearFilters={() => {
-                setTypeFilter('all');
-                router.get(index());
-            }}
-            filters={
-                <Select
-                    value={typeFilter}
-                    onValueChange={handleTypeFilterChange}
-                >
-                    <SelectTrigger className="w-48">
-                        <SelectValue placeholder="Filter by product type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All Product Types</SelectItem>
-                        {productTypes.map((productType) => (
-                            <SelectItem
-                                key={productType.id}
-                                value={productType.id.toString()}
-                            >
-                                {productType.name}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
+            columnsButton={
+                table && (
+                    <DataTableExport
+                        table={table}
+                        filename="product-sizes"
+                        columns={exportColumns}
+                    />
+                )
             }
-            useCard={false}
         >
-            <ProductSizeList
-                productSizes={productSizes.data}
-                onDelete={deleteDialog.show}
-            />
+            <div className="space-y-4">
+                <CommonDataTable
+                    columns={columns}
+                    data={productSizes}
+                    globalFilterValue={globalFilter}
+                    onGlobalFilterChange={setGlobalFilter}
+                    onTableChange={setTable}
+                />
+            </div>
 
             <ConfirmDialog
                 {...deleteDialog.dialogProps}

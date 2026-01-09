@@ -12,47 +12,37 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ProductSize extends Model
 {
-    /** @use HasFactory<ProductSizeFactory> */
-    use HasFactory;
-
-    use HasUuids;
-
-    protected static function newFactory()
-    {
-        return ProductSizeFactory::new();
-    }
+    use HasFactory, HasUuids;
 
     protected $fillable = [
         'product_type_id',
         'size_label',
-        'price',
-        'description',
         'is_active',
     ];
 
-    /**
-     * @return array<string, string>
-     */
+    // Casts for attributes
     protected function casts(): array
     {
         return [
-            'price' => 'decimal:2',
+            'is_active' => 'boolean',
         ];
     }
 
-    /**
-     * @return BelongsTo<ProductType, $this>
-     */
+    // Relationships with ProductType
     public function productType(): BelongsTo
     {
         return $this->belongsTo(ProductType::class);
     }
 
-    /**
-     * @return HasMany<OrderItem, $this>
-     */
+    // Relationships with OrderItem
     public function orderItems(): HasMany
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    // Factory
+    protected static function newFactory()
+    {
+        return ProductSizeFactory::new();
     }
 }

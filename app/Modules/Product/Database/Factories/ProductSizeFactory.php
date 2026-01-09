@@ -21,8 +21,6 @@ class ProductSizeFactory extends Factory
         return [
             'product_type_id' => ProductType::factory(),
             'size_label' => $sizes[$sizeIndex++ % count($sizes)],
-            'price' => fake()->randomFloat(2, 10, 500),
-            'description' => fake()->optional()->sentence(),
             'is_active' => true,
         ];
     }

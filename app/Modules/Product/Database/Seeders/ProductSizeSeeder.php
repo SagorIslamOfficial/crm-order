@@ -8,9 +8,7 @@ use Illuminate\Database\Seeder;
 
 class ProductSizeSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
+    // Run the database seeds.
     public function run(): void
     {
         $productTypes = ProductType::all();
@@ -34,8 +32,7 @@ class ProductSizeSeeder extends Seeder
                         'size_label' => $size,
                     ],
                     [
-                        'price' => 0,
-                        'description' => null,
+                        'is_active' => true,
                     ]
                 );
             }
@@ -48,8 +45,7 @@ class ProductSizeSeeder extends Seeder
                         'size_label' => $size,
                     ],
                     [
-                        'price' => 0,
-                        'description' => null,
+                        'is_active' => true,
                     ]
                 );
             }

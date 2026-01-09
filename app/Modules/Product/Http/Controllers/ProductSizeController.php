@@ -3,6 +3,7 @@
 namespace App\Modules\Product\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Product\Contracts\ProductServiceInterface;
 use App\Modules\Product\Contracts\ProductSizeRepositoryInterface;
 use App\Modules\Product\Contracts\ProductTypeRepositoryInterface;
 use App\Modules\Product\Http\Requests\StoreProductSizeRequest;
@@ -18,7 +19,8 @@ class ProductSizeController extends Controller
 {
     public function __construct(
         protected ProductSizeRepositoryInterface $productSizeRepository,
-        protected ProductTypeRepositoryInterface $productTypeRepository
+        protected ProductTypeRepositoryInterface $productTypeRepository,
+        protected ProductServiceInterface $productService
     ) {}
 
     public function index(): Response|JsonResponse
@@ -30,7 +32,15 @@ class ProductSizeController extends Controller
         $productTypes = $this->productTypeRepository->getAllForDropdown();
 
         if (request()->wantsJson()) {
-            return response()->json($productSizes);
+            return response()->json([
+                'data' => $productSizes->getCollection()->map(function ($productSize) {
+                    return $this->productService->transformProductSizeForResponse($productSize);
+                }),
+                'current_page' => $productSizes->currentPage(),
+                'last_page' => $productSizes->lastPage(),
+                'per_page' => $productSizes->perPage(),
+                'total' => $productSizes->total(),
+            ]);
         }
 
         return Inertia::render('modules/product/size/index', [

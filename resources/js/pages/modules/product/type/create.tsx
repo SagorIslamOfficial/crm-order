@@ -1,81 +1,111 @@
-import { Button } from '@/components/ui/button';
+import { FormActions, InfoCard } from '@/components/common';
+import { InputField } from '@/components/common/InputField';
+import { MainPageLayout } from '@/components/common/layout/MainPageLayout';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { dashboard } from '@/routes';
 import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
-import AppLayout from '@/layouts/app-layout';
-import { ProductTypeFormComponent } from '@/modules/product/components';
-import { useProductTypeForm } from '@/modules/product/hooks';
-import { index } from '@/routes/product-types';
+    index as productTypesIndex,
+    store as productTypesStore,
+} from '@/routes/product-types';
 import { type BreadcrumbItem } from '@/types';
-import { Head, Link } from '@inertiajs/react';
+import { router, useForm } from '@inertiajs/react';
+import { ArrowLeft } from 'lucide-react';
+import type { FormEvent } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
+        title: 'Dashboard',
+        href: dashboard().url,
+    },
+    {
         title: 'Product Types',
-        href: '/product-types',
+        href: productTypesIndex().url,
     },
     {
         title: 'Create',
-        href: '/product-types/create',
+        href: '#',
     },
 ];
 
 export default function ProductTypesCreate() {
-    const { data, errors, processing, updateField, submit } =
-        useProductTypeForm();
+    const { data, setData, post, processing, errors } = useForm({
+        name: '',
+        description: '',
+        is_active: true,
+    });
 
-    const handleSubmit = () => {
-        submit(index().url);
+    const handleSubmit = (e: FormEvent) => {
+        e.preventDefault();
+        post(productTypesStore().url);
     };
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Create Product Type" />
-            <div className="m-auto flex h-full w-4xl flex-1 flex-col gap-6 p-4 md:p-6">
-                {/* Header */}
-                <div className="flex items-center gap-4">
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tight">
-                            Create Product Type
-                        </h1>
-                        <p className="text-muted-foreground">
-                            Add a new product type to the system
-                        </p>
-                    </div>
-                </div>
-
-                {/* Form */}
-                <Card className="max-w-2xl">
-                    <CardHeader>
-                        <CardTitle>Product Type Details</CardTitle>
-                        <CardDescription>
-                            Enter the details for the new product type
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <ProductTypeFormComponent
-                            data={data}
-                            errors={errors}
-                            processing={processing}
-                            onChange={updateField}
-                            onSubmit={handleSubmit}
-                            submitLabel="Create Product Type"
+        <MainPageLayout
+            title="Create Product Type"
+            description="Add a new product type to the system"
+            breadcrumbs={breadcrumbs}
+            backButton={{
+                href: productTypesIndex().url,
+                icon: ArrowLeft,
+                label: 'Back',
+            }}
+            useCard={false}
+        >
+            <form onSubmit={handleSubmit} className="mx-auto max-w-2xl">
+                <InfoCard title="Product Type Details">
+                    <div className="space-y-6">
+                        <InputField
+                            id="name"
+                            label="Name"
+                            type="text"
+                            value={data.name}
+                            onChange={(e) => setData('name', e.target.value)}
+                            placeholder="Product type name"
+                            error={errors.name}
+                            required
                         />
 
-                        <div className="mt-6 flex gap-4">
-                            <Link href={index().url}>
-                                <Button variant="outline" type="button">
-                                    Cancel
-                                </Button>
-                            </Link>
+                        <InputField
+                            textarea
+                            id="description"
+                            label="Description"
+                            value={data.description}
+                            onChange={(e) =>
+                                setData('description', e.target.value)
+                            }
+                            placeholder="Product type description"
+                            rows={3}
+                            error={errors.description}
+                        />
+
+                        <div className="flex items-center space-x-2">
+                            <Checkbox
+                                id="is_active"
+                                checked={data.is_active}
+                                onCheckedChange={(checked) =>
+                                    setData('is_active', !!checked)
+                                }
+                            />
+                            <Label htmlFor="is_active">Active</Label>
                         </div>
-                    </CardContent>
-                </Card>
-            </div>
-        </AppLayout>
+
+                        {errors.is_active && (
+                            <p className="text-xs font-medium text-destructive">
+                                {errors.is_active}
+                            </p>
+                        )}
+                    </div>
+                </InfoCard>
+
+                <FormActions
+                    onCancel={() => router.visit(productTypesIndex().url)}
+                    submitLabel="Create Product Type"
+                    cancelLabel="Cancel"
+                    isProcessing={processing}
+                    className="mt-6"
+                />
+            </form>
+        </MainPageLayout>
     );
 }

@@ -7,7 +7,6 @@ use App\Modules\Shop\Models\Shop;
 use App\Repositories\BaseRepository;
 use Illuminate\Pagination\LengthAwarePaginator;
 
-// @extends BaseRepository<Shop>
 class ShopRepository extends BaseRepository implements ShopRepositoryInterface
 {
     // Get the model class name.
@@ -27,11 +26,11 @@ class ShopRepository extends BaseRepository implements ShopRepositoryInterface
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('location', 'like', "%{$search}%");
+                    ->orWhere('address', 'like', "%{$search}%");
             });
         }
 
-        return $query->orderBy('created_at', 'desc')->paginate($perPage);
+        return $query->orderBy('created_at', 'desc')->paginate($perPage)->withQueryString();
     }
 
     // Get all shops for dropdown.

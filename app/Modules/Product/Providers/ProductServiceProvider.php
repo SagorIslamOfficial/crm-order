@@ -28,8 +28,6 @@ class ProductServiceProvider extends ServiceProvider
     {
         Gate::policy(ProductType::class, ProductTypePolicy::class);
         Gate::policy(ProductSize::class, ProductSizePolicy::class);
-
-        $this->loadRoutesFrom(__DIR__.'/../Routes/web.php');
         $this->loadMigrationsFrom(__DIR__.'/../Database/Migrations');
     }
 }
