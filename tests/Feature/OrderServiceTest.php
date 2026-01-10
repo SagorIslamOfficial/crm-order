@@ -1,11 +1,11 @@
 <?php
 
-use App\Models\Customer;
-use App\Models\Order;
-use App\Models\ProductSize;
-use App\Models\ProductType;
-use App\Models\Shop;
-use App\Services\OrderService;
+use App\Modules\Customer\Models\Customer;
+use App\Modules\Order\Models\Order;
+use App\Modules\Order\Services\OrderService;
+use App\Modules\Product\Models\ProductSize;
+use App\Modules\Product\Models\ProductType;
+use App\Modules\Shop\Models\Shop;
 
 it('generates sequential order numbers with shop code', function () {
     $orderService = app(OrderService::class);
@@ -33,8 +33,8 @@ it('generates sequential order numbers with shop code', function () {
     $order1 = $orderService->create($orderData);
     $order2 = $orderService->create($orderData);
 
-    expect($order1->order_number)->toBe('DHK-000001');
-    expect($order2->order_number)->toBe('DHK-000002');
+    expect($order1->order_number)->toBe('ORD-DHK-000001');
+    expect($order2->order_number)->toBe('ORD-DHK-000002');
 });
 
 it('finds or creates customer by phone', function () {

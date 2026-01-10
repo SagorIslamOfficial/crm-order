@@ -1,192 +1,42 @@
-import { Button } from '@/components/ui/button';
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import AppLayout from '@/layouts/app-layout';
-import { index, store } from '@/routes/roles';
+import { MainPageLayout } from '@/components/common/layout/MainPageLayout';
+import { RoleCreateForm } from '@/components/modules/role';
+import type { CreateRolePageProps } from '@/components/modules/role/types';
+import { dashboard } from '@/routes';
+import { index as rolesIndex } from '@/routes/roles';
 import { type BreadcrumbItem } from '@/types';
-import { Head, Link, useForm } from '@inertiajs/react';
-import { Save } from 'lucide-react';
-
-interface Permission {
-    name: string;
-    label: string;
-}
-
-interface Props {
-    permissions: Permission[];
-}
+import { ArrowLeft } from 'lucide-react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'Role Management',
-        href: '/roles',
+        title: 'Dashboard',
+        href: dashboard().url,
+    },
+    {
+        title: 'Roles',
+        href: rolesIndex().url,
     },
     {
         title: 'Create',
-        href: '/roles/create',
+        href: '#',
     },
 ];
 
-export default function RolesCreate({ permissions }: Props) {
-    const { data, setData, post, processing, errors } = useForm({
-        name: '',
-        guard_name: 'web',
-        permissions: [] as string[],
-    });
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        post(store().url, {
-            onSuccess: () => {
-                window.location.href = index().url;
-            },
-        });
-    };
-
-    const handlePermissionChange = (
-        permissionName: string,
-        checked: boolean,
-    ) => {
-        if (checked) {
-            setData('permissions', [...data.permissions, permissionName]);
-        } else {
-            setData(
-                'permissions',
-                data.permissions.filter(
-                    (permission) => permission !== permissionName,
-                ),
-            );
-        }
-    };
-
+export default function CreateRole({ permissions }: CreateRolePageProps) {
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Create Role" />
-            <div className="m-auto flex h-full w-4xl flex-1 flex-col gap-6 p-4 md:p-6">
-                {/* Header */}
-                <div className="flex items-center gap-4">
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tight">
-                            Create Role
-                        </h1>
-                        <p className="text-muted-foreground">
-                            Add a new role to the system
-                        </p>
-                    </div>
-                </div>
-
-                {/* Form */}
-                <Card className="max-w-2xl">
-                    <CardHeader>
-                        <CardTitle>Role Details</CardTitle>
-                        <CardDescription>
-                            Enter the details for the new role
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <form onSubmit={handleSubmit} className="space-y-6">
-                            <div className="space-y-2">
-                                <Label htmlFor="name">Role Name</Label>
-                                <Input
-                                    id="name"
-                                    value={data.name}
-                                    onChange={(e) =>
-                                        setData('name', e.target.value)
-                                    }
-                                    placeholder="Enter role name"
-                                    required
-                                />
-                                {errors.name && (
-                                    <p className="text-sm text-red-600">
-                                        {errors.name}
-                                    </p>
-                                )}
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="guard_name">Guard Name</Label>
-                                <Input
-                                    id="guard_name"
-                                    value={data.guard_name}
-                                    onChange={(e) =>
-                                        setData('guard_name', e.target.value)
-                                    }
-                                    placeholder="Enter guard name"
-                                />
-                                {errors.guard_name && (
-                                    <p className="text-sm text-red-600">
-                                        {errors.guard_name}
-                                    </p>
-                                )}
-                            </div>
-
-                            <div className="space-y-4">
-                                <Label>Permissions</Label>
-                                <div className="grid max-h-96 gap-3 overflow-y-auto rounded-md border p-4">
-                                    {permissions.map((permission) => (
-                                        <div
-                                            key={permission.name}
-                                            className="flex items-center space-x-2"
-                                        >
-                                            <Checkbox
-                                                id={`permission-${permission.name}`}
-                                                checked={data.permissions.includes(
-                                                    permission.name,
-                                                )}
-                                                onCheckedChange={(checked) =>
-                                                    handlePermissionChange(
-                                                        permission.name,
-                                                        Boolean(checked),
-                                                    )
-                                                }
-                                            />
-                                            <Label
-                                                htmlFor={`permission-${permission.name}`}
-                                                className="cursor-pointer text-sm"
-                                            >
-                                                {permission.label}
-                                            </Label>
-                                        </div>
-                                    ))}
-                                </div>
-                                {errors.permissions && (
-                                    <p className="text-sm text-red-600">
-                                        {errors.permissions}
-                                    </p>
-                                )}
-                            </div>
-
-                            <div className="flex gap-4">
-                                <Button
-                                    type="submit"
-                                    disabled={processing}
-                                    className="gap-2"
-                                >
-                                    <Save className="h-4 w-4" />
-                                    {processing ? 'Creating...' : 'Create Role'}
-                                </Button>
-                                <Link href={index().url}>
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        disabled={processing}
-                                    >
-                                        Cancel
-                                    </Button>
-                                </Link>
-                            </div>
-                        </form>
-                    </CardContent>
-                </Card>
+        <MainPageLayout
+            title="Create Role"
+            description="Add a new role to the system"
+            breadcrumbs={breadcrumbs}
+            backButton={{
+                href: rolesIndex().url,
+                icon: ArrowLeft,
+                label: 'Back',
+            }}
+            useCard={false}
+        >
+            <div className="mx-auto max-w-2xl">
+                <RoleCreateForm permissions={permissions} />
             </div>
-        </AppLayout>
+        </MainPageLayout>
     );
 }

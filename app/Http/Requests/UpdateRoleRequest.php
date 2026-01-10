@@ -7,19 +7,13 @@ use Illuminate\Validation\Rule;
 
 class UpdateRoleRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
+    // Determine if the user is authorized to make this request.
     public function authorize(): bool
     {
         return $this->user()->can('roles.update');
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
+    // Get the validation rules that apply to the request.
     public function rules(): array
     {
         $roleId = $this->route('role')?->id ?? $this->route('role');
@@ -28,20 +22,16 @@ class UpdateRoleRequest extends FormRequest
             'name' => [
                 'required',
                 'string',
-                'max:255',
+                'max:50',
                 Rule::unique('roles', 'name')->ignore($roleId),
             ],
-            'guard_name' => 'sometimes|string|max:255',
+            'guard_name' => 'sometimes|string|max:50',
             'permissions' => 'sometimes|array',
             'permissions.*' => 'string|exists:permissions,name',
         ];
     }
 
-    /**
-     * Get custom messages for validator errors.
-     *
-     * @return array<string, string>
-     */
+    // Get custom messages for validator errors.
     public function messages(): array
     {
         return [
@@ -51,9 +41,7 @@ class UpdateRoleRequest extends FormRequest
         ];
     }
 
-    /**
-     * Prepare the data for validation.
-     */
+    // Prepare the data for validation.
     protected function prepareForValidation(): void
     {
         if (! $this->has('guard_name')) {

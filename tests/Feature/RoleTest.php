@@ -3,97 +3,146 @@
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Role;
 use Tests\Traits\MakesAuthenticatedRequests;
+
+use function Pest\Laravel\actingAs;
+use function Pest\Laravel\assertDatabaseHas;
+use function Pest\Laravel\assertDatabaseMissing;
+use function Pest\Laravel\get;
+use function Pest\Laravel\seed;
+use function Pest\Laravel\withHeaders;
 
 uses(RefreshDatabase::class, MakesAuthenticatedRequests::class);
 
 beforeEach(function () {
-    $this->seed(RolePermissionSeeder::class);
+    seed(RolePermissionSeeder::class);
 });
 
 test('roles index page is displayed', function () {
+    /** @var \App\Models\User $user */
     $user = User::factory()->create();
     $user->assignRole('Administrator');
 
-    $response = $this->actingAs($user)->get('/roles');
+    actingAs($user);
 
-    $response->assertSuccessful();
+    get('/roles')->assertSuccessful();
 });
 
 test('roles can be listed', function () {
+    /** @var \App\Models\User $admin */
     $admin = User::factory()->create();
     $admin->assignRole('Administrator');
 
-    $response = $this->actingAs($admin)->get('/roles');
+    actingAs($admin);
 
-    $response->assertSuccessful();
-    $response->assertInertia(fn ($page) => $page
-        ->has('roles.data', 6) // Administrator, Salesperson, Product Manager, Quantity Manager, Production Manager, Quality Controller
-    );
+    get('/roles')
+        ->assertSuccessful()
+        ->assertInertia(fn ($page) => $page
+            ->has('roles.data', 6) // Administrator, Salesperson, Product Manager, Quantity Manager, Production Manager, Quality Controller
+        );
 });
 
 test('role can be created', function () {
+    /** @var \App\Models\User $admin */
     $admin = User::factory()->create();
     $admin->assignRole('Administrator');
+
+    // Get CSRF token
+    actingAs($admin);
+    get('/users');
+    $csrfToken = session()->token();
 
     $roleData = [
         'name' => 'Test Role',
         'permissions' => ['users.create', 'users.view'],
+        '_token' => $csrfToken,
     ];
 
-    $response = makeRequest('post', '/roles', $roleData, $admin);
+    actingAs($admin);
 
-    $response->assertRedirect('/roles');
-    $response->assertSessionHas('message', 'Role created successfully.');
+    withHeaders([
+        'X-CSRF-TOKEN' => $csrfToken,
+        'X-Inertia' => 'true',
+        'X-Requested-With' => 'XMLHttpRequest',
+    ])->post('/roles', $roleData)
+        ->assertRedirect('/roles')
+        ->assertSessionHas('message', 'Role created successfully.');
 
-    $this->assertDatabaseHas('roles', [
+    assertDatabaseHas('roles', [
         'name' => 'Test Role',
     ]);
 });
 
 test('role creation requires permission', function () {
+    /** @var \App\Models\User $user */
     $user = User::factory()->create();
     $user->assignRole('Salesperson'); // No roles.create permission
+
+    // Get CSRF token
+    actingAs($user);
+    get('/users');
+    $csrfToken = session()->token();
 
     $roleData = [
         'name' => 'Test Role',
         'permissions' => ['users.view'],
+        '_token' => $csrfToken,
     ];
 
-    $response = makeRequest('post', '/roles', $roleData, $user);
+    actingAs($user);
 
-    $response->assertForbidden();
+    withHeaders([
+        'X-CSRF-TOKEN' => $csrfToken,
+        'X-Inertia' => 'true',
+        'X-Requested-With' => 'XMLHttpRequest',
+    ])->post('/roles', $roleData)
+        ->assertForbidden();
 });
 
 test('role can be viewed', function () {
+    /** @var \App\Models\User $admin */
     $admin = User::factory()->create();
     $admin->assignRole('Administrator');
 
-    $role = \Spatie\Permission\Models\Role::where('name', 'Salesperson')->first();
+    $role = Role::where('name', 'Salesperson')->first();
 
-    $response = $this->actingAs($admin)->get("/roles/{$role->id}");
+    actingAs($admin);
 
-    $response->assertSuccessful();
-    $response->assertInertia(fn ($page) => $page
-        ->where('role.name', 'Salesperson')
-    );
+    get("/roles/{$role->id}")
+        ->assertSuccessful()
+        ->assertInertia(fn ($page) => $page
+            ->where('role.name', 'Salesperson')
+        );
 });
 
 test('role can be updated', function () {
+    /** @var \App\Models\User $admin */
     $admin = User::factory()->create();
     $admin->assignRole('Administrator');
 
-    $role = \Spatie\Permission\Models\Role::where('name', 'Salesperson')->first();
+    $role = Role::where('name', 'Salesperson')->first();
+
+    // Get CSRF token
+    actingAs($admin);
+    get('/users');
+    $csrfToken = session()->token();
 
     $updateData = [
         'name' => 'Updated Salesperson',
         'permissions' => ['users.view', 'users.update'],
+        '_token' => $csrfToken,
     ];
 
-    $response = makeRequest('put', "/roles/{$role->id}", $updateData, $admin);
+    actingAs($admin);
 
-    $response->assertRedirect('/roles');
-    $response->assertSessionHas('message', 'Role updated successfully.');
+    withHeaders([
+        'X-CSRF-TOKEN' => $csrfToken,
+        'X-Inertia' => 'true',
+        'X-Requested-With' => 'XMLHttpRequest',
+    ])->put("/roles/{$role->id}", $updateData)
+        ->assertRedirect('/roles')
+        ->assertSessionHas('message', 'Role updated successfully.');
 
     $role->refresh();
     expect($role->name)->toBe('Updated Salesperson');
@@ -102,42 +151,76 @@ test('role can be updated', function () {
 });
 
 test('role update requires permission', function () {
+    /** @var \App\Models\User $user */
     $user = User::factory()->create();
     $user->assignRole('Salesperson'); // No roles.update permission
 
-    $role = \Spatie\Permission\Models\Role::where('name', 'Product Manager')->first();
+    $role = Role::where('name', 'Product Manager')->first();
+
+    // Get CSRF token
+    actingAs($user);
+    get('/users');
+    $csrfToken = session()->token();
 
     $updateData = [
         'name' => 'Updated Role',
         'permissions' => ['users.view'],
+        '_token' => $csrfToken,
     ];
 
-    $response = makeRequest('put', "/roles/{$role->id}", $updateData, $user);
+    actingAs($user);
 
-    $response->assertForbidden();
+    withHeaders([
+        'X-CSRF-TOKEN' => $csrfToken,
+        'X-Inertia' => 'true',
+        'X-Requested-With' => 'XMLHttpRequest',
+    ])->put("/roles/{$role->id}", $updateData)
+        ->assertForbidden();
 });
 
 test('role can be deleted', function () {
+    /** @var \App\Models\User $admin */
     $admin = User::factory()->create();
     $admin->assignRole('Administrator');
 
-    $role = \Spatie\Permission\Models\Role::where('name', 'Quality Controller')->first();
+    $role = Role::where('name', 'Quality Controller')->first();
 
-    $response = makeRequest('delete', "/roles/{$role->id}", [], $admin);
+    // Get CSRF token
+    actingAs($admin);
+    get('/users');
+    $csrfToken = session()->token();
 
-    $response->assertRedirect('/roles');
-    $response->assertSessionHas('message', 'Role deleted successfully.');
+    actingAs($admin);
 
-    $this->assertDatabaseMissing('roles', ['id' => $role->id]);
+    withHeaders([
+        'X-CSRF-TOKEN' => $csrfToken,
+        'X-Inertia' => 'true',
+        'X-Requested-With' => 'XMLHttpRequest',
+    ])->delete("/roles/{$role->id}", ['_token' => $csrfToken])
+        ->assertRedirect('/roles')
+        ->assertSessionHas('message', 'Role deleted successfully.');
+
+    assertDatabaseMissing('roles', ['id' => $role->id]);
 });
 
 test('role deletion requires permission', function () {
+    /** @var \App\Models\User $user */
     $user = User::factory()->create();
     $user->assignRole('Salesperson'); // No roles.delete permission
 
-    $role = \Spatie\Permission\Models\Role::where('name', 'Product Manager')->first();
+    $role = Role::where('name', 'Product Manager')->first();
 
-    $response = makeRequest('delete', "/roles/{$role->id}", [], $user);
+    // Get CSRF token
+    actingAs($user);
+    get('/users');
+    $csrfToken = session()->token();
 
-    $response->assertForbidden();
+    actingAs($user);
+
+    withHeaders([
+        'X-CSRF-TOKEN' => $csrfToken,
+        'X-Inertia' => 'true',
+        'X-Requested-With' => 'XMLHttpRequest',
+    ])->delete("/roles/{$role->id}", ['_token' => $csrfToken])
+        ->assertForbidden();
 });

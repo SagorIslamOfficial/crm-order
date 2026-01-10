@@ -2,18 +2,33 @@
 
 namespace App\Repositories;
 
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
 use Spatie\Permission\Models\Permission;
 
 class PermissionRepository
 {
-    public function getAll(): \Illuminate\Database\Eloquent\Collection
+    const DEFAULT_PER_PAGE = 10;
+
+    // Get all permissions.
+    public function getAll(): Collection
     {
         return Permission::orderBy('name')->get();
     }
 
-    public function getPaginated(int $perPage = 15): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    // Get paginated permissions.
+    public function getPaginated(?int $perPage = null, array $filters = []): LengthAwarePaginator
     {
-        return Permission::orderBy('name')->paginate($perPage);
+        $perPage = $perPage ?? self::DEFAULT_PER_PAGE;
+
+        $query = Permission::with(['roles', 'users'])->orderBy('name');
+
+        if (! empty($filters['search'])) {
+            $search = $filters['search'];
+            $query->where('name', 'like', "%{$search}%");
+        }
+
+        return $query->paginate($perPage);
     }
 
     public function findById(int $id): Permission
@@ -30,6 +45,7 @@ class PermissionRepository
     {
         return Permission::create([
             'name' => $data['name'],
+            'guard_name' => $data['guard_name'] ?? 'web',
         ]);
     }
 
@@ -37,6 +53,7 @@ class PermissionRepository
     {
         $permission->update([
             'name' => $data['name'],
+            'guard_name' => $data['guard_name'] ?? $permission->guard_name,
         ]);
 
         return $permission->fresh();
@@ -62,6 +79,7 @@ class PermissionRepository
         return [
             'id' => $permission->id,
             'name' => $permission->name,
+            'guard_name' => $permission->guard_name,
             'roles_count' => $this->getRolesCount($permission),
             'users_count' => $this->getUsersCount($permission),
             'created_at' => $permission->created_at,

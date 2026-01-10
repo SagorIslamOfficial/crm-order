@@ -1,6 +1,17 @@
 import { InertiaLinkProps } from '@inertiajs/react';
 import { LucideIcon } from 'lucide-react';
 
+export interface BaseEntity {
+    id: string;
+}
+
+export interface Filters {
+    page?: number;
+    per_page?: number;
+    sort?: string;
+    direction?: 'asc' | 'desc';
+}
+
 export interface Auth {
     user: User;
 }
@@ -48,4 +59,11 @@ export interface User {
     created_at: string;
     updated_at: string;
     [key: string]: unknown; // This allows for additional properties...
+}
+
+export interface ApiError {
+    message: string;
+    data?: {
+        errors?: Record<string, string[] | string>;
+    };
 }
